@@ -88,7 +88,7 @@ _________________________________________________________________
 
 <table>
 <tr>
-<td>Basic model</td><td>Model summary</td>
+<td>Improved model</td><td>Model summary</td>
 </tr>
 <tr>
 <td valign="top">
