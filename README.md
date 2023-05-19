@@ -163,6 +163,6 @@ Non-trainable params: 0
 
 ### Training Result
 
-Comparing the result between basic and improved models
+Comparing the training result between basic and improved models
 
 ![training result](data/training-result.png)
