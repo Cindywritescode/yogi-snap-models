@@ -165,4 +165,4 @@ Non-trainable params: 0
 
 Comparing the training result between basic and improved models
 
-![training result](data/training-result.png)
+![training result](data/Training-result.png)
