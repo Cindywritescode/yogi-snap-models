@@ -86,6 +86,25 @@ _________________________________________________________________
 
 - **Improved Model**
 
+added data augmentation to increase the data variety
+
+```python
+data_augmentation_layer = keras.Sequential(
+    [
+        layers.Resizing(img_height, img_width),
+        layers.RandomFlip("horizontal"),
+        layers.RandomBrightness((-0.25, 0.25)),
+        layers.RandomContrast((0.25, 0.25)),
+        layers.RandomTranslation((-0.15, 0.15), (-0.15, 0.15)),
+        layers.RandomRotation((-0.10, 0.10)),
+        layers.RandomZoom((0, 0.25)),
+    ]
+)
+augmented_ds = train_ds.map(lambda x, y: (data_augmentation_layer(x), y))
+```
+
+& dropout layer added in the model
+
 <table>
 <tr>
 <td>Improved model</td><td>Model summary</td>
@@ -95,8 +114,7 @@ _________________________________________________________________
 
 ```python
 model = Sequential([
-    # add augmented data
-    data_augmentation,
+    layers.InputLayer((img_height, img_width, 3)),
     # data normalisation
     layers.Rescaling(1. / 255),
     # 1st convolutional block
@@ -128,7 +146,7 @@ Model: "sequential_1"
 _________________________________________________________________
  Layer (type)                Output Shape              Param #   
 =================================================================
- sequential (Sequential)        (None, 180, 180, 3)       0         
+sequential (Sequential)        (None, 180, 180, 3)       0         
 
 rescaling_1 (Rescaling)        (None, 180, 180, 3)       0
 
@@ -165,4 +183,39 @@ Non-trainable params: 0
 
 Comparing the training result between basic and improved models
 
-![training result](data/Training-result.png)
+<table>
+<tr>
+<td>Basic model</td><td>Improved model</td>
+</tr>
+<tr>
+<td>
+
+![training result-basic model](data/training_result_basic_model_epoch10.png)
+</td>
+<td valign="top">
+
+![training result-improved model](data/training_result_improved_model_epoch100.png)
+</td>
+</tr>
+</table>
+
+
+### Confusion Matrix
+
+The heatmaps are based on the result of improved model (both training and test dataset), learning what pose get confuse with other poses.
+
+<table>
+<tr>
+<td>Training Dataset</td><td>Test Dataset</td>
+</tr>
+<tr>
+<td valign="top">
+
+![confusion_matrix-training dataset](data/confusion_matrix_training_dataset.png)
+</td>
+<td valign="top">
+
+![confusion_matrix-test dataset](data/confusion_matrix_test_dataset.png)
+</td>
+</tr>
+</table>
