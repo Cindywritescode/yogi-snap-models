@@ -7,12 +7,20 @@ Keras Sequential model.
 
 ### Data
 
-There are 5 yoga poses in the dataset, with 630 images in total. Yoga poses including downdog (179 images), goddess (125
-images), plank (107 images), tree (58 images), and warrior (166 images). The data was saved in a
+In the training dataset, there are 5 yoga poses with 630 images in total. Yoga poses including downdog (179 images),
+goddess (125 images), plank (107 images), tree (58 images), and warrior (166 images). The data was saved in a
 tree structure under the project folder. All data is saved in a folder called “data”, underneath which is a "yoga_poses"
-folder with five subfolders containing photos of five different yoga poses.
+folder with five subfolders containing photos of five different yoga poses. This dataset is for training and validation
+purpose.
 
-![5 yoga poses in the dataset](data/5yoga-poses-in-the-dataset.png)
+![training dataset sample](data/5yoga-poses-training-dataset.png)
+*Training dataset. Image source: [Kaggle](https://www.kaggle.com/datasets/ujjwalchowdhury/yoga-pose-classification)*
+
+There is another dataset for testing the model which is under folder "sample", with 40 images in total, including
+downdog (11 images), goddess (6 images), plank (8 images), tree (8 images), and warrior (7 images).
+
+![testing dataset smaple](data/5yoga-poses-test-dataset.png)
+*Tasting dataset. Image source: Roehampton University yoga society members*
 
 ### Models
 
@@ -46,6 +54,7 @@ model = Sequential([
     layers.Dense(num_classes)
 ])
 ```
+
 </td>
 <td>
 
@@ -77,33 +86,48 @@ Non-trainable params: 0
 _________________________________________________________________
 
 ```
+
 </td>
 </tr>
 </table>
 
-
-
-
 - **Improved Model**
 
-added data augmentation to increase the data variety
+The improved model added data augmentation to increase the data variety & a dropout layer to address the overfitting.
+
+<table>  
+<tr valign="top">
+<td>
 
 ```python
+
 data_augmentation_layer = keras.Sequential(
     [
         layers.Resizing(img_height, img_width),
         layers.RandomFlip("horizontal"),
         layers.RandomBrightness((-0.25, 0.25)),
         layers.RandomContrast((0.25, 0.25)),
-        layers.RandomTranslation((-0.15, 0.15), (-0.15, 0.15)),
-        layers.RandomRotation((-0.10, 0.10)),
-        layers.RandomZoom((0, 0.25)),
+        layers.RandomTranslation((-0.15, 0.15), (-0.15, 0.15), fill_mode='constant'),
+        layers.RandomRotation((-0.025, 0.025), fill_mode='constant'),
+        # The rotation value is low here, 
+        # because too much rotation may make the data look like a different pose 
+        layers.RandomZoom((0, 0.25), fill_mode='constant'),
+        # the default fill_mode parameter is 'reflect', 
+        # change it to avoid the augmented data look distortion 
     ]
 )
 augmented_ds = train_ds.map(lambda x, y: (data_augmentation_layer(x), y))
 ```
 
-& dropout layer added in the model
+</td>
+<td height="200">
+
+![data augmentation](data/augmented-data.png)
+
+</td>
+
+</tr>
+</table> 
 
 <table>
 <tr>
@@ -114,29 +138,36 @@ augmented_ds = train_ds.map(lambda x, y: (data_augmentation_layer(x), y))
 
 ```python
 model = Sequential([
+    # Data normalisation
     layers.InputLayer((img_height, img_width, 3)),
-    # data normalisation
     layers.Rescaling(1. / 255),
     # 1st convolutional block
     layers.Conv2D(16, 3, padding='same', activation='relu'),
     layers.MaxPooling2D(),
     # 2nd convolutional block
-    layers.Conv2D(64, 3, padding='same', activation='relu'),
-    layers.MaxPooling2D(),
-    # 3rd convolutional block
-    layers.Conv2D(128, 3, padding='same', activation='relu'),
-    layers.MaxPooling2D(),
-    # 4th convolutional block
     layers.Conv2D(32, 3, padding='same', activation='relu'),
     layers.MaxPooling2D(),
-    # add dropout
+    # 3nd convolutional block
+    layers.Conv2D(64, 3, padding='same', activation='relu'),
+    layers.MaxPooling2D(),
+    # 4th convolutional block
+    layers.Conv2D(128, 3, padding='same', activation='relu'),
+    layers.MaxPooling2D(),
+    # 5th convolutional block
+    layers.Conv2D(64, 3, padding='same', activation='relu'),
+    layers.MaxPooling2D(),
+    # 6th convolutional block
+    layers.Conv2D(32, 3, padding='same', activation='relu'),
+    layers.MaxPooling2D(),
+    # Add dropout
     layers.Dropout(0.3),
-    # fully-connected layer
+    # Fully-connected layer
     layers.Flatten(),
     layers.Dense(128, activation='relu'),
     layers.Dense(num_classes, name="outputs")
 ])
 ```
+
 </td>
 <td>
 
@@ -146,35 +177,39 @@ Model: "sequential_1"
 _________________________________________________________________
  Layer (type)                Output Shape              Param #   
 =================================================================
-sequential (Sequential)        (None, 180, 180, 3)       0         
-
-rescaling_1 (Rescaling)        (None, 180, 180, 3)       0
-
-conv2d (Conv2D)                (None, 180, 180, 16)      448
-max_pooling2d (MaxPooling2D)   (None, 90, 90, 16)        0
-
-conv2d_1 (Conv2D)              (None, 90, 90, 64)        9280                                                                      
-max_pooling2d_1 (MaxPooling2D) (None, 45, 45, 64)        0
-
-conv2d_2 (Conv2D)              (None, 45, 45, 128)       73856                                                                
-max_pooling2d_2 (MaxPooling2D) (None, 22, 22, 128)       0
-
-conv2d_3 (Conv2D)              (None, 22, 22, 32)        36896                                                                     
-max_pooling2d_3 (MaxPooling2D) (None, 11, 11, 32)        0
-
-dropout (Dropout)              (None, 11, 11, 32)        0
-
-flatten (Flatten)              (None, 3872)              0
-
-dense (Dense)                  (None, 128)               495744
-
-outputs (Dense)                (None, 5)                 645
+ rescaling (Rescaling)           (None, 180, 180, 3)       0         
                                                                  
+ conv2d (Conv2D)                 (None, 180, 180, 16)      448                                                                    
+ max_pooling2d (MaxPooling2D)    (None, 90, 90, 16)        0         
+ 
+ conv2d_1 (Conv2D)               (None, 90, 90, 32)        4640                                                                      
+ max_pooling2d_1 (MaxPooling2D)  (None, 45, 45, 32)        0                                                                  
+                                                                 
+ conv2d_2 (Conv2D)               (None, 45, 45, 64)        18496                                                                    
+ max_pooling2d_2 (MaxPooling2D)  (None, 22, 22, 64)        0                                                                     
+                                                                 
+ conv2d_3 (Conv2D)               (None, 22, 22, 128)       73856  
+ max_pooling2d_3 (MaxPooling2D)  (None, 11, 11, 128)       0         
+                                                             
+                                                                 
+ conv2d_4 (Conv2D)               (None, 11, 11, 64)        73792                                                                    
+ max_pooling2d_4 (MaxPooling2D)  (None, 5, 5, 64)          0                                                    
+                                                                 
+ conv2d_5 (Conv2D)               (None, 5, 5, 32)          18464     
+                                                                 
+ max_pooling2d_5 (MaxPooling2D)  (None, 2, 2, 32)          0         
+ dropout (Dropout)               (None, 2, 2, 32)          0         
+                                                                 
+ flatten (Flatten)               (None, 128)               0                                                                         
+ dense (Dense)                   (None, 128)               16512                                                                    
+ outputs (Dense)                 (None, 5)                 645                                                                      
 =================================================================
-Total params: 616,869
-Trainable params: 616,869
-Non-trainable params: 0
+Total params: 206,853
+Trainable params: 206,853
+Non-trainable params: 0                                                                                                             
+_________________________________________________________________
 ```
+
 </td>
 </tr>
 </table>
@@ -185,7 +220,7 @@ Comparing the training result between basic and improved models
 
 <table>
 <tr>
-<td>Basic model</td><td>Improved model</td>
+<td>Basic model </td><td>Improved model</td>
 </tr>
 <tr>
 <td>
@@ -199,17 +234,19 @@ Comparing the training result between basic and improved models
 </tr>
 </table>
 
+- The improved model has `85% accuracy` on testing dataset
 
 ### Confusion Matrix
 
-The heatmaps are based on the result of improved model (both training and test dataset), learning what pose get confuse with other poses.
+The heatmaps are based on the result of improved model (both training and test dataset), learning what pose get confuse
+with other poses.
 
 <table>
 <tr>
 <td>Training Dataset</td><td>Test Dataset</td>
 </tr>
 <tr>
-<td valign="top">
+<td valign="top" >
 
 ![confusion_matrix-training dataset](data/confusion_matrix_training_dataset.png)
 </td>
