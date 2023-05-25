@@ -93,7 +93,7 @@ _________________________________________________________________
 
 - **Improved Model**
 
-The improved model added data augmentation to increase the data variety & a dropout layer to address the overfitting.
+The improved model added `data augmentation` to increase the data variety & a dropout layer to address the overfitting.
 
 <table>  
 <tr valign="top">
@@ -110,7 +110,7 @@ data_augmentation_layer = keras.Sequential(
         layers.RandomTranslation((-0.15, 0.15), (-0.15, 0.15), fill_mode='constant'),
         layers.RandomRotation((-0.025, 0.025), fill_mode='constant'),
         # The rotation value is low here, 
-        # because too much rotation may make the data look like a different pose 
+        # because too much rotation may make the data dislike the original pose 
         layers.RandomZoom((0, 0.25), fill_mode='constant'),
         # the default fill_mode parameter is 'reflect', 
         # change it to avoid the augmented data look distortion 
@@ -118,9 +118,10 @@ data_augmentation_layer = keras.Sequential(
 )
 augmented_ds = train_ds.map(lambda x, y: (data_augmentation_layer(x), y))
 ```
+[reference-RandomRotation](https://www.tensorflow.org/api_docs/python/tf/keras/layers/RandomRotation)
 
 </td>
-<td height="200">
+<td>
 
 ![data augmentation](data/augmented-data.png)
 
@@ -225,6 +226,38 @@ Comparing the training result between basic and improved models
 <tr>
 <td>
 
+```python
+batch_size = 32
+
+---------------
+epochs=10
+history = model.fit(
+    train_ds,
+    validation_data=val_ds,
+    epochs=epochs
+)
+```
+</td>
+<td>
+
+```python
+batch_size = 64
+
+---------------
+epochs = 100
+history = model.fit(
+    augmented_ds,
+    validation_data=val_ds,
+    epochs=epochs
+)
+```
+</td>
+
+
+</tr>
+<tr>
+<td>
+
 ![training result-basic model](data/training_result_basic_model_epoch10.png)
 </td>
 <td valign="top">
@@ -234,7 +267,7 @@ Comparing the training result between basic and improved models
 </tr>
 </table>
 
-- The improved model has `85% accuracy` on testing dataset
+- The improved model  has about `85% accuracy` on testing dataset
 
 ### Confusion Matrix
 
